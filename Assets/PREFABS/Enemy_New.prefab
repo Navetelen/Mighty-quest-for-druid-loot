@@ -154,6 +154,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ghostPrefab: {fileID: 32978141752848465, guid: 7fb122b2863af8d4e844d89b31cba277,
     type: 3}
+  arrowHeadPrefab: {fileID: 6191702849562711975, guid: 40f80315ef6920d489a15ab44d024fdc,
+    type: 3}
   stepsAhead: 4
 --- !u!54 &4497204925163283628
 Rigidbody:

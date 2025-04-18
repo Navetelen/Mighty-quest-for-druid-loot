@@ -5,9 +5,12 @@ using UnityEngine;
 public class EnemyGhostTrail : MonoBehaviour
 {
     public GameObject ghostPrefab;
+    public GameObject arrowHeadPrefab; // ÚJ
+
     public int stepsAhead = 1;
 
     private GameObject currentGhost;
+    private GameObject arrowInstance; // ÚJ
     private List<Tile> path;
     private DummyEnemy dummy;
 
@@ -15,13 +18,13 @@ public class EnemyGhostTrail : MonoBehaviour
     private float lineHeight = 0.5f; // egységes magasság minden pontnak
 
     void Awake(){
-            lineRenderer = gameObject.AddComponent<LineRenderer>();
-            lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            lineRenderer.startWidth = 0.1f;
-            lineRenderer.endWidth = 0.1f;
-            lineRenderer.startColor = Color.red;
-            lineRenderer.endColor = Color.red;
-            lineRenderer.useWorldSpace = true;
+        lineRenderer = gameObject.AddComponent<LineRenderer>();
+        lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+        lineRenderer.startWidth = 0.1f;
+        lineRenderer.endWidth = 0.1f;
+        lineRenderer.startColor = Color.red;
+        lineRenderer.endColor = Color.red;
+        lineRenderer.useWorldSpace = true;
     }
 
     private void Start()
@@ -32,7 +35,6 @@ public class EnemyGhostTrail : MonoBehaviour
         {
             ShowGhosts();
         }
-
     }
 
     private void OnDestroy()
@@ -59,6 +61,8 @@ public class EnemyGhostTrail : MonoBehaviour
 
         if (currentGhost != null)
             Destroy(currentGhost);
+        if (arrowInstance != null) // Töröljük az előző nyilat, ha van
+            Destroy(arrowInstance);
 
         Tile targetTile = dummy.GetProjectedTargetTile();
         if (targetTile == null)
@@ -68,8 +72,6 @@ public class EnemyGhostTrail : MonoBehaviour
 
         // LineRenderer pontok
         List<Vector3> points = new List<Vector3>();
-        float lineHeight = 0.5f;
-
         Vector3 start = dummy.transform.position;
         start.y = lineHeight;
         points.Add(start);
@@ -97,6 +99,26 @@ public class EnemyGhostTrail : MonoBehaviour
             actualSteps++;
         }
 
+        // Ha van legalább két pont, lerövidítjük a végét
+        if (points.Count >= 2)
+        {
+            Vector3 last = points[points.Count - 1];
+            Vector3 secondLast = points[points.Count - 2];
+            Vector3 dir = (last - secondLast).normalized;
+
+            float shortenDistance = 0.5f;
+            Vector3 shortenedEnd = last - dir * shortenDistance;
+            points[points.Count - 1] = shortenedEnd;
+
+            // Nyíl prefab létrehozása
+            if (arrowHeadPrefab != null)
+            {
+                arrowInstance = Instantiate(arrowHeadPrefab, shortenedEnd, Quaternion.identity, transform);
+
+                arrowInstance.transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
+            }
+        }
+
         lineRenderer.positionCount = points.Count;
         lineRenderer.SetPositions(points.ToArray());
 
@@ -106,9 +128,8 @@ public class EnemyGhostTrail : MonoBehaviour
         else if (actualSteps < dummy.movementPerTurn)
             SetTrailColor(Color.yellow);
         else
-            SetTrailColor(Color.green);
+            SetTrailColor(Color.blue);
     }
-
 
     void SetTrailColor(Color color)
     {
@@ -116,16 +137,13 @@ public class EnemyGhostTrail : MonoBehaviour
         lineRenderer.endColor = color;
     }
 
-
-
-
-
     void HideGhost()
     {
         if (currentGhost != null)
             Destroy(currentGhost);
+        if (arrowInstance != null)
+            Destroy(arrowInstance);
 
         lineRenderer.positionCount = 0;
     }
-
 }
